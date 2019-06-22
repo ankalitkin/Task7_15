@@ -35,6 +35,7 @@ public class MainForm {
     private JButton splitButton;
     private JPanel drawPanel;
     private JTextArea textArea1;
+    private RelationshipGraph graph;
 
     private int getN() { return (int) nSpinner.getValue(); }
     private int getK() { return (int) kSpinner.getValue(); }
@@ -52,11 +53,13 @@ public class MainForm {
     }
 
     MainForm() {
-        nSpinner.setModel(new SpinnerNumberModel(20,  2, 1000, 2));
-        kSpinner.setModel(new SpinnerNumberModel(1,  1, 100, 1));
+        nSpinner.setModel(new SpinnerNumberModel(10,  2, 1000, 2));
+        kSpinner.setModel(new SpinnerNumberModel(0,  0, 100, 1));
         sSpinner.setModel(new SpinnerNumberModel(1,  1, 100, 1));
         pSpinner.setModel(new SpinnerNumberModel(1,  1, 100, 1));
         generateButton.addActionListener(e -> generateButtonClicked());
+        findWayButton.addActionListener(e -> findWayButtonClicked());
+        splitButton.addActionListener(e -> splitButtonClicked());
         exitButton.addActionListener(e -> System.exit(0));
         imagePanel = new ImagePanel();
         drawPanel.setLayout(new GridLayout());
@@ -64,8 +67,24 @@ public class MainForm {
     }
 
     private void generateButtonClicked() {
-        RelationshipGraph graph = GraphUtils.generate(getN());
+        graph = GraphUtils.generate(getN(), getK());
         BufferedImage image = Graphviz.fromString(graph.toDot()).render(Format.SVG).toImage();
         imagePanel.update(image);
     }
+
+    private void findWayButtonClicked() {
+        if(graph == null)
+            return;
+        BufferedImage image = Graphviz.fromString(graph.toDotWay()).render(Format.SVG).toImage();
+        imagePanel.update(image);
+    }
+
+    private void splitButtonClicked() {
+        if(graph == null)
+            return;
+        BufferedImage image = Graphviz.fromString(graph.toDotGroups(getS(), getP())).render(Format.SVG).toImage();
+        imagePanel.update(image);
+    }
+
+
 }

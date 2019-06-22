@@ -1,15 +1,27 @@
 package ru.vsu.cs.course1;
 
-import javax.swing.plaf.nimbus.State;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.Stack;
+import java.util.*;
 
 public class GraphUtils {
-    public static RelationshipGraph generate(int vertexCount) {
+    private static Random random = new Random();
+    private interface Getter {
+        boolean get(RelationshipGraph graph, int i, int j);
+    }
+    private interface Setter {
+        void set(RelationshipGraph graph, int i, int j);
+    }
+
+    public static RelationshipGraph generate(int vertexCount, int k) {
         RelationshipGraph graph = new RelationshipGraph(vertexCount);
         int maxFriends = vertexCount / 2;
+        addEdges(vertexCount, graph, maxFriends, RelationshipGraph::areFriends, RelationshipGraph::makeFriends);
+        addEdges(vertexCount, graph, k, (graph1, i, j) -> !graph1.areStrangers(i, j), RelationshipGraph::makeEnemies);
+        return graph;
+    }
 
+    private static void addEdges(int vertexCount, RelationshipGraph graph, int max, Getter getter, Setter setter) {
+        if(max <= 0)
+            return;
         int[] edges = new int[vertexCount];
 
         LinkedList<Integer> list = new LinkedList<>();
@@ -22,19 +34,17 @@ public class GraphUtils {
             for(int b : list) {
                 if(a == b)
                     continue;
-                if(graph.areFriends(a, b))
+                if(getter.get(graph, a, b))
                     continue;
-                graph.makeFriends(a, b);
-                if(++edges[a] == maxFriends)
+                setter.set(graph, a, b);
+                if(++edges[a] == max)
                     list.remove((Integer)a);
-                if(++edges[b] == maxFriends)
+                if(++edges[b] == max)
                     list.remove((Integer)b);
                 continue there;
             }
             list.removeFirst();
         }
-
-        return graph;
     }
 
     public static Integer[] findWay(RelationshipGraph graph, int from) {
@@ -44,7 +54,7 @@ public class GraphUtils {
         int current = from;
         int last = -1;
         int counter = 0;
-        while(!wayStack.empty()) {
+        while(true) {
             int next = -1;
             for (int i = last+1; i < vertexCount; i++) {
                 if (i == current) continue;
@@ -78,6 +88,7 @@ public class GraphUtils {
         }
         return null;
     }
+
     public static void printGraph(SymmetricGraph graph) {
         for (int i = 0; i < graph.vertexCount(); i++) {
             for (int j = 0; j < i; j++) {
@@ -85,6 +96,38 @@ public class GraphUtils {
             }
             System.out.println();
         }
+    }
+
+    public static int[] splitIntoGroups(RelationshipGraph graph, int groupNumber, int maxEnemies) {
+        long initSeed = Math.abs(random.nextLong());
+        int vertexCount = graph.vertexCount();
+        there: for(long seed = initSeed;seed < initSeed+10000; seed++) {
+            long currentSeed = seed;
+            int[] split = new int[vertexCount];
+            for (int i = 0; i < vertexCount; i++) {
+                split[i] = (int) (currentSeed % groupNumber);
+                currentSeed /= groupNumber;
+            }
+            for (int i = 0; i < groupNumber; i++) {
+                for (int j = 0; j < vertexCount; j++) {
+                    int counter = 0;
+                    for (int k = 0; k < vertexCount; k++) {
+                        if(j == k || split[j] != split[k])
+                            continue;
+                        if (graph.areEnemies(j, k))
+                            counter++;
+                    }
+                    if (counter >= maxEnemies)
+                        continue there;
+                }
+            }
+            /*for (int i = 0; i < vertexCount; i++) {
+                System.out.print(split[i]);
+            }
+            System.out.println();*/
+            return split;
+        }
+        throw new RuntimeException("Can't generate");
     }
 
     /*public static void main(String[] args) {

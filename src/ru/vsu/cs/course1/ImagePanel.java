@@ -16,23 +16,26 @@ public class ImagePanel extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        g.setColor(Color.WHITE);
+        int width = getParent().getWidth();
+        int height = getParent().getHeight();
+        g.drawRect(0, 0, width, height);
         if (originalImage != null) {
             BufferedImage img = getResizedImage();
-            g.drawImage(getResizedImage(), 0, 0, null);
+            int left = Math.max((width - img.getWidth()) / 2, 0);
+            int top = Math.max((height - img.getHeight()) / 2, 0);
+            g.drawImage(img, left, top, null);
         }
     }
 
     void update(BufferedImage image) {
         this.originalImage = image;
-        setSize(image.getWidth(), image.getHeight());
         validate();
-        image = getResizedImage();
-        paintImmediately(0, 0, image.getWidth(), image.getHeight());
+        paintImmediately(0, 0, getParent().getWidth(), getParent().getHeight());
     }
 
-
     private BufferedImage getResizedImage() {
-        System.out.println(getWidth()+" "+getHeight());
+        //System.out.println(getWidth()+" "+getHeight());
         int width  = originalImage.getWidth();
         int height  = originalImage.getHeight();
         double scale = Math.min(getWidth()/(double)width, getHeight()/(double)height);
