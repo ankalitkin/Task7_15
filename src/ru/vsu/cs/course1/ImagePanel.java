@@ -21,9 +21,12 @@ public class ImagePanel extends JPanel {
         int height = getParent().getHeight();
         g.drawRect(0, 0, width, height);
         if (originalImage != null) {
-            BufferedImage img = getResizedImage();
-            int left = Math.max((width - img.getWidth()) / 2, 0);
-            int top = Math.max((height - img.getHeight()) / 2, 0);
+            double scale = getScale();
+            BufferedImage img = getResizedImage(scale);
+            //int left = Math.max((width - img.getWidth()) / 2, 0);
+            //int top = Math.max((height - img.getHeight()) / 2, 0);
+            int left = (int)(width - originalImage.getWidth()*scale)/2;
+            int top = (int)(height - originalImage.getHeight()*scale)/2;
             g.drawImage(img, left, top, null);
         }
     }
@@ -34,11 +37,16 @@ public class ImagePanel extends JPanel {
         paintImmediately(0, 0, getParent().getWidth(), getParent().getHeight());
     }
 
-    private BufferedImage getResizedImage() {
-        //System.out.println(getWidth()+" "+getHeight());
+    private double getScale() {
         int width  = originalImage.getWidth();
         int height  = originalImage.getHeight();
         double scale = Math.min(getWidth()/(double)width, getHeight()/(double)height);
+        return Math.min(scale, 1);
+    }
+
+    private BufferedImage getResizedImage(double scale) {
+        int width  = originalImage.getWidth();
+        int height  = originalImage.getHeight();
         if(scale > 1)
             return originalImage;
         BufferedImage tmp = new BufferedImage(width, height, originalImage.getType());

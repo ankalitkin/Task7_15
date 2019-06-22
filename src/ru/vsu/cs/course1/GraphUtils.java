@@ -101,7 +101,7 @@ public class GraphUtils {
     public static int[] splitIntoGroups(RelationshipGraph graph, int groupNumber, int maxEnemies) {
         long initSeed = Math.abs(random.nextLong());
         int vertexCount = graph.vertexCount();
-        there: for(long seed = initSeed;seed < initSeed+10000; seed++) {
+        there: for(long seed = initSeed;seed < initSeed+1000000; seed++) {
             long currentSeed = seed;
             int[] split = new int[vertexCount];
             for (int i = 0; i < vertexCount; i++) {
