@@ -1,8 +1,7 @@
 package ru.vsu.cs.course1;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class RelationshipGraph {
     private interface Dotter {
@@ -95,14 +94,30 @@ public class RelationshipGraph {
         }));
     }
 
-    public String toDotWay() {
-        Integer[] way = GraphUtils.findWay(this, 0);
-        if(way == null)
+    public String toDotWay(AtomicReference<String> ref) {
+        Integer[] way;
+        try {
+            way = GraphUtils.findWay(this);
+        } catch (GraphUtils.CantFindWayException e) {
+            if(ref != null)
+                ref.set(e.toString());
             return null;
+        }
+        if(ref != null) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Way: ");
+            for (Integer integer : way) {
+                sb.append(integer).append(" " +
+                        "-- ");
+            }
+            int len = sb.length();
+            sb.delete(len-2, len-1);
+            ref.set(sb.toString());
+        }
+
         HashSet<Integer> edges = new HashSet<>(way.length*2);
         for (int i = 0; i < way.length; i++) {
             int j = (i+1)%way.length;
-            System.out.println(way[i]+" --"+way[j]);
             edges.add(way[i] << 16 | way[j]);
             edges.add(way[j] << 16 | way[i]);
         }
@@ -123,8 +138,28 @@ public class RelationshipGraph {
         }));
     }
 
-    public String toDotGroups(int groupNumber, int maxEnemies) {
-        int[] split = GraphUtils.splitIntoGroups(this, groupNumber, maxEnemies);
+    public String toDotGroups(int groupNumber, int maxEnemies, AtomicReference<String> ref) {
+        int[] split;
+        try {
+            split = GraphUtils.splitIntoGroups(this, groupNumber, maxEnemies);
+        } catch (GraphUtils.CantSplitException e) {
+            if(ref != null)
+                ref.set(e.toString());
+            return null;
+        }
+        if(ref != null) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < groupNumber; i++) {
+                sb.append(String.format("Group %d: ", i+1));
+                for(int j = 0; j < split.length; j++)
+                    if(split[j] == i)
+                        sb.append(j).append(", ");
+                int len = sb.length();
+                sb.delete(len -2, len -1);
+                sb.append(System.lineSeparator());
+            }
+            ref.set(sb.toString());
+        }
 
         return toDot(((sb, v1, v2) -> {
             if (split[v1] != split[v2])

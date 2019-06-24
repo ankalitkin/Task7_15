@@ -1,29 +1,18 @@
 package ru.vsu.cs.course1;
 import javax.swing.*;
 
-import static guru.nidi.graphviz.attribute.Label.Justification.*;
-import static guru.nidi.graphviz.model.Factory.*;
-
-import guru.nidi.graphviz.attribute.*;
-import guru.nidi.graphviz.attribute.Color;
-import guru.nidi.graphviz.attribute.Label;
-import guru.nidi.graphviz.attribute.Shape;
 import guru.nidi.graphviz.engine.*;
-import guru.nidi.graphviz.model.*;
-import guru.nidi.graphviz.parse.*;
-import guru.nidi.graphviz.service.*;
-import guru.nidi.graphviz.use.*;
-import guru.nidi.graphviz.*;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 public class MainForm {
     private static final String FORM_TITLE = "Task 7_15 by @kalitkin_a_v";
     private JPanel rootPanel;
-    private JButton loadDotButton;
     private JButton saveDotButton;
+    private JButton saveSVGButton;
     private JButton generateButton;
     private JButton findWayButton;
     private JButton exitButton;
@@ -34,8 +23,10 @@ public class MainForm {
     private ImagePanel imagePanel;
     private JButton splitButton;
     private JPanel drawPanel;
-    private JTextArea textArea1;
+    private JTextArea resultTextArea;
     private RelationshipGraph graph;
+    private String dot;
+    private String svg;
 
     private int getN() { return (int) nSpinner.getValue(); }
     private int getK() { return (int) kSpinner.getValue(); }
@@ -52,39 +43,71 @@ public class MainForm {
         FormUtils.processFormAfter(mainForm.rootPanel, frame, true);
     }
 
-    MainForm() {
+    private MainForm() {
         nSpinner.setModel(new SpinnerNumberModel(10,  2, 1000, 2));
         kSpinner.setModel(new SpinnerNumberModel(0,  0, 100, 1));
         sSpinner.setModel(new SpinnerNumberModel(1,  1, 100, 1));
-        pSpinner.setModel(new SpinnerNumberModel(1,  1, 100, 1));
-        generateButton.addActionListener(e -> generateButtonClicked());
-        findWayButton.addActionListener(e -> findWayButtonClicked());
-        splitButton.addActionListener(e -> splitButtonClicked());
+        pSpinner.setModel(new SpinnerNumberModel(1,  0, 100, 1));
+        saveDotButton.addActionListener(e -> saveDot());
+        saveSVGButton.addActionListener(e -> saveSvg());
+        generateButton.addActionListener(e -> generate());
+        findWayButton.addActionListener(e -> findWay());
+        splitButton.addActionListener(e -> split());
         exitButton.addActionListener(e -> System.exit(0));
         imagePanel = new ImagePanel();
         drawPanel.setLayout(new GridLayout());
         drawPanel.add(imagePanel);
     }
 
-    private void generateButtonClicked() {
+    private void generate() {
         graph = GraphUtils.generate(getN(), getK());
-        BufferedImage image = Graphviz.fromString(graph.toDot()).render(Format.SVG).toImage();
-        imagePanel.update(image);
+        dot = graph.toDot();
+        drawGraph();
     }
 
-    private void findWayButtonClicked() {
+    private void findWay() {
         if(graph == null)
             return;
-        BufferedImage image = Graphviz.fromString(graph.toDotWay()).render(Format.SVG).toImage();
-        imagePanel.update(image);
+        AtomicReference<String> ref = new AtomicReference<>();
+        dot = graph.toDotWay(ref);
+        resultTextArea.setText(ref.get());
+        redrawResult();
+        if (dot == null)
+            return;
+        drawGraph();
     }
 
-    private void splitButtonClicked() {
+    private void split() {
         if(graph == null)
             return;
-        BufferedImage image = Graphviz.fromString(graph.toDotGroups(getS(), getP())).render(Format.SVG).toImage();
+        String warn = "";
+        if(getS() * getP() < getK()) {
+            warn = "Required S*P>=K\r\n";
+        }
+        AtomicReference<String> ref = new AtomicReference<>();
+        dot = graph.toDotGroups(getS(), getP(), ref);
+        resultTextArea.setText(warn+ref.get());
+        redrawResult();
+        if (dot == null)
+            return;
+        drawGraph();
+    }
+
+    private void redrawResult() {
+        resultTextArea.paintImmediately(0, 0, resultTextArea.getWidth(), resultTextArea.getHeight());
+    }
+
+    private void drawGraph() {
+        BufferedImage image = Graphviz.fromString(dot).render(Format.SVG).toImage();
         imagePanel.update(image);
     }
 
+    private void saveDot() {
+        Utils.saveToFile("graph.dot", dot);
+    }
+
+    private void saveSvg() {
+        Utils.saveToFile("graph.svg", Graphviz.fromString(dot).render(Format.SVG).toString());
+    }
 
 }

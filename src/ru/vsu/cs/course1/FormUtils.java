@@ -33,7 +33,7 @@ public class FormUtils  {
     }
 
     private static void setMinimumWindowSize(JFrame frame) {
-        int width = (int)(800 * scaleFactor);
+        int width = (int)(1000 * scaleFactor);
         int height = (int)(800 * scaleFactor);
         //int width = frame.getWidth();
         //int height = frame.getHeight();
@@ -85,11 +85,7 @@ public class FormUtils  {
     }
 
     private static double getScaleFactorInternal() {
-        return 1;
-        //return Math.round((new com.sun.java.swing.plaf.windows.WindowsLookAndFeel().getDefaults().getFont("Label.font").getSize()) / 11.0 / 0.96 * 8) / 8.0;
-    }
-
-    public static double getScaleFactor() {
-        return scaleFactor;
+        //return 1;
+        return Math.round((new com.sun.java.swing.plaf.windows.WindowsLookAndFeel().getDefaults().getFont("Label.font").getSize()) / 11.0 / 0.96 * 8) / 8.0;
     }
 }

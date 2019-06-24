@@ -2,7 +2,7 @@ package ru.vsu.cs.course1;
 
 import java.util.*;
 
-public class GraphUtils {
+class GraphUtils {
     private static Random random = new Random();
     private interface Getter {
         boolean get(RelationshipGraph graph, int i, int j);
@@ -10,8 +10,21 @@ public class GraphUtils {
     private interface Setter {
         void set(RelationshipGraph graph, int i, int j);
     }
+    public static class CantSplitException extends Exception{
+        @Override
+        public String toString() {
+            return "Can't split";
+        }
+    }
 
-    public static RelationshipGraph generate(int vertexCount, int k) {
+    public static class CantFindWayException extends Exception{
+        @Override
+        public String toString() {
+            return "Can't find way";
+        }
+    }
+
+    static RelationshipGraph generate(int vertexCount, int k) {
         RelationshipGraph graph = new RelationshipGraph(vertexCount);
         int maxFriends = vertexCount / 2;
         addEdges(vertexCount, graph, maxFriends, RelationshipGraph::areFriends, RelationshipGraph::makeFriends);
@@ -47,18 +60,18 @@ public class GraphUtils {
         }
     }
 
-    public static Integer[] findWay(RelationshipGraph graph, int from) {
+    static Integer[] findWay(RelationshipGraph graph) throws CantFindWayException {
         int vertexCount = graph.vertexCount();
         Stack<Integer> wayStack = new Stack<>();
 
-        int current = from;
+        int current = 0;
         int last = -1;
         int counter = 0;
         while(true) {
             int next = -1;
             for (int i = last+1; i < vertexCount; i++) {
                 if (i == current) continue;
-                if (wayStack.contains(i) && i != from) continue;
+                if (wayStack.contains(i) && i != 0) continue;
                 if(graph.areFriends(current, i)) {
                     next = i;
                     break;
@@ -72,7 +85,7 @@ public class GraphUtils {
 
             wayStack.push(current);
             current = next;
-            if(current == from) {
+            if(current == 0) {
                 if (wayStack.size() == vertexCount) {
                     return wayStack.toArray(new Integer[0]);
                 }
@@ -86,10 +99,10 @@ public class GraphUtils {
             if(counter++ > 100000)
                 break;
         }
-        return null;
+        throw new CantFindWayException();
     }
 
-    public static void printGraph(SymmetricGraph graph) {
+    static void printGraph(SymmetricGraph graph) {
         for (int i = 0; i < graph.vertexCount(); i++) {
             for (int j = 0; j < i; j++) {
                 System.out.print(graph.get(i, j));
@@ -98,7 +111,7 @@ public class GraphUtils {
         }
     }
 
-    public static int[] splitIntoGroups(RelationshipGraph graph, int groupNumber, int maxEnemies) {
+    static int[] splitIntoGroups(RelationshipGraph graph, int groupNumber, int maxEnemies) throws CantSplitException {
         long initSeed = Math.abs(random.nextLong());
         int vertexCount = graph.vertexCount();
         there: for(long seed = initSeed;seed < initSeed+1000000; seed++) {
@@ -117,28 +130,13 @@ public class GraphUtils {
                         if (graph.areEnemies(j, k))
                             counter++;
                     }
-                    if (counter >= maxEnemies)
+                    if (counter > maxEnemies)
                         continue there;
                 }
             }
-            /*for (int i = 0; i < vertexCount; i++) {
-                System.out.print(split[i]);
-            }
-            System.out.println();*/
             return split;
         }
-        throw new RuntimeException("Can't generate");
+        throw new CantSplitException();
     }
-
-    /*public static void main(String[] args) {
-        RelationshipGraph graph = generate(100);
-        printGraph(graph.getGraph());
-        System.out.println();
-        for (int a: findWay(graph, 0)) {
-            System.out.print(a);
-            System.out.print(" ");
-        }
-    }*/
-
 
 }
